@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -83,6 +84,11 @@ func TestCreateDomainCanonicalizesIDN(t *testing.T) {
 		DnsCredentialID: cred.ID,
 	})
 	require.ErrorIs(t, err, dnsSvc.ErrDuplicateDomain)
+}
+
+func TestNormalizeDomainRejectsOverlongIDN(t *testing.T) {
+	_, err := dnsSvc.NormalizeDomain("example." + strings.Repeat("例", 58))
+	require.EqualError(t, err, dnsSvc.ErrInvalidDomain.Error())
 }
 
 func TestRecordLineLifecycle(t *testing.T) {

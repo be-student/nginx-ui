@@ -17,7 +17,10 @@ import (
 
 const providerTimeout = 10 * time.Second
 
-var domainPattern = regexp.MustCompile(`^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9-]{2,}$`)
+var (
+	domainPattern     = regexp.MustCompile(`^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9-]{2,}$`)
+	domainIDNAProfile = idna.New(idna.MapForLookup(), idna.BidiRule(), idna.VerifyDNSLength(true))
+)
 
 // DomainInput represents the payload required to create or update a domain.
 type DomainInput struct {
@@ -305,7 +308,7 @@ func ensureDomainUnique(ctx context.Context, domain string, credentialID uint64,
 }
 
 func normalizeDomain(value string) (string, error) {
-	domain, err := idna.Lookup.ToASCII(strings.Trim(strings.TrimSpace(value), "."))
+	domain, err := domainIDNAProfile.ToASCII(strings.Trim(strings.TrimSpace(value), ".\u3002\uff0e\uff61"))
 	if err != nil {
 		return "", cosy.WrapErrorWithParams(ErrInvalidDomain, value)
 	}
